@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+from RL_tictactoe import TicTacToe
 
 class MCT():
     size = 0
@@ -48,9 +49,7 @@ class Node():
 
     def add_subnode(self, node: object) -> object:
         self.subnodes.append(node)
-        print(f"""subnode count first: {self.subnode_count}""")
         self.subnode_count += 1
-        print(f"""subnode count after: {self.subnode_count}""")
         return self.subnodes
 
     def is_leaf_node(self) -> bool:
@@ -83,7 +82,7 @@ class Agent():
             self.S = {}
 
             if R == None:
-                self.R = {'win': 1, 'lose': -1}
+                self.R = {'win': 1, 'draw': 0, 'lose': -1}
             else:
                 self.R = R 
             self.continuous = continuous
@@ -92,8 +91,14 @@ class Agent():
 
 
 class TTT_Agent(Agent):
-    def __init__(self) -> None:
+    def __init__(self, player: str = None) -> None:
         super().__init__('TTT')
+
+        if player == None:
+            player = np.random.choice(['x','o'])
+        
+        self.player = player
+        print(f'Player chosen for Agent {self.player}')
 
         self.MCT.append(self.get_initial_leaf())
 
@@ -104,6 +109,9 @@ class TTT_Agent(Agent):
     def getActions(self) -> None:
         print(self.A)
 
+    def get_action(self) -> object:
+        return((0,1))
+
     def get_initial_leaf(self, parent_node: object = None) -> object:
         return Node(parent_node = parent_node) #{'node_id': 0, 'val': 0, 'subnode_count': 0, 'subnodes': []}
 
@@ -111,10 +119,7 @@ class TTT_Agent(Agent):
         return node.get_value() + 2 * np.sqrt(np.log(total_nodes) / node.get_subnode_count() ) if total_nodes != 0 else 99999 #V[i] + 2 * np.sqrt(np.log(N)/ N[i])
 
     def get_multi_ucb1(self, nodes: object, total_nodes: int) -> object:
-        for node in nodes:
-            print(node)
-            print(node.get_subnode_count())
-        return [node.get_value() + 2 * np.sqrt(np.log(total_nodes) / node.get_subnode_count() ) if total_nodes != 0 else 99999 for node in nodes]
+        return [node.get_value() + 2 * np.sqrt(np.log(total_nodes) / node.get_subnode_count() ) if (total_nodes != 0) and (node.get_subnode_count() != 0) else 99999 for node in nodes]
     
     def iterate(self) -> None:
         root = self.MCT[0]
@@ -124,7 +129,6 @@ class TTT_Agent(Agent):
             root.add_subnode(self.get_initial_leaf(parent_node = root))
 
         total_nodes = root.get_subnode_count()
-
         #ucb1_val_left = self.get_ucb1(root.get_subnode(0), total_nodes)
         #ucb1_val_right = self.get_ucb1(root.get_subnode(1), total_nodes)
         
@@ -152,9 +156,13 @@ class TTT_Agent(Agent):
     def rollout(self, node):
         return 10
 
-ttt_agnt = TTT_Agent()
 
-ttt_agnt.getActions()
+if __name__ == '__main__':
+    ttt_game = TicTacToe()
+    
+    ttt_agnt = TTT_Agent()
 
-ttt_agnt.iterate()
+    ttt_agnt.getActions()
+
+    ttt_agnt.iterate()
     
